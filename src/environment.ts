@@ -3,6 +3,7 @@ import { existsSync, promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { orgName } from './hostName';
 
 const ConfigurationsKey = 'HKCU\\Software\\Microsoft\\Dynamics\\AX7\\Development\\Configurations';
 const WorkspaceEnvironmentKey = 'xpp.environmentUrl';
@@ -106,9 +107,7 @@ export function dynamics365Folder(): string {
 }
 
 /** Org name of a Dataverse URL; a unified developer environment's F&O host starts with the same name. */
-export function orgName(url: string): string {
-    return new URL(/^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`).hostname.split('.')[0].toLowerCase();
-}
+export { orgName };
 
 /** The configurations in XPPConfig, the newest of each environment (an application update leaves the old one). */
 export async function listEnvironments(): Promise<EnvironmentConfig[]> {

@@ -13,3 +13,4 @@ experimental/**
 test/**
 docs/**
 .vscode-test/**
+CLAUDE.md

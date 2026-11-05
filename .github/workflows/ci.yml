@@ -1,0 +1,32 @@
+name: CI
+
+# Compiles the TypeScript extension and runs the unit tests (test/unit). The .NET server needs the D365FO
+# assemblies from PackagesLocalDirectory\bin, which are not redistributable, so it is built and smoke-tested
+# on a developer environment (scripts/build-server.ps1, scripts/smoke-test.ps1), not here.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  extension:
+    # package.json declares "os": ["win32"], so npm ci only runs on Windows.
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test

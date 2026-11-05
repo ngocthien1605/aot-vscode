@@ -12,7 +12,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nazmolla/xpp-vscode.git"
+    "url": "https://github.com/ngocthien1605/aot-vscode.git"
   },
   "homepage": "https://github.com/nazmolla/xpp-vscode#readme",
   "bugs": {
@@ -38,6 +38,13 @@
   "os": [
     "win32"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Runs the D365FO compiler, pac and the debugger proxy on the workspace's projects."
+    },
+    "virtualWorkspaces": false
+  },
   "main": "./out/extension.js",
   "activationEvents": [
     "workspaceContains:**/*.rnrproj",
@@ -1185,12 +1192,14 @@
         "xpp.pacPath": {
           "type": "string",
           "default": "",
-          "description": "Path to the Power Platform CLI (pac). Defaults to pac on PATH."
+          "scope": "machine",
+          "description": "Path to the Power Platform CLI (pac). Defaults to pac on PATH. User settings only: a workspace cannot choose which program runs."
         },
         "xpp.debuggerProxyPath": {
           "type": "string",
           "default": "",
-          "description": "Path to Microsoft.Dynamics.AX.DebuggerProxy.exe. Defaults to the FinOps tools installed by X++: Connect to Environment."
+          "scope": "machine",
+          "description": "Path to Microsoft.Dynamics.AX.DebuggerProxy.exe. Defaults to the FinOps tools installed by X++: Connect to Environment. User settings only: a workspace cannot choose which program runs."
         },
         "xpp.financeAndOperationsUrl": {
           "type": "string",
@@ -1305,6 +1314,7 @@
     "watch": "tsc -watch -p .",
     "build:server": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-server.ps1",
     "build": "npm run build:server && npm run compile",
+    "test": "npm run compile && node --test \"test/unit/*.test.js\"",
     "package": "vsce package"
   },
   "devDependencies": {

@@ -1,5 +1,10 @@
 # Copilot instructions: xpp-vscode
 
+## This repository is a fork
+- `ngocthien1605/aot-vscode` is a fork of `nazmolla/xpp-vscode` (Apache-2.0; keep `LICENSE` and `NOTICE`, and list changes under "Modifications" in `NOTICE`). The git remote `upstream` points to the original.
+- The rest of this file is the upstream author's notes. Paths under `C:\Users\Mohamed Nazmi\...`, the `org2f1d2adc` environment and the `testcust` model are on their machine, not this one: ask for the local equivalents instead of assuming them.
+- Pull upstream fixes with `git fetch upstream` and `git merge upstream/main`; keep diffs to ported code small so that stays easy.
+
 ## What this project is
 A VS Code extension, **F&O Studio for VS Code**, that brings Dynamics 365 Finance & Operations (D365FO) X++ development to VS Code and its AI agents, without Visual Studio. It is the VS Code successor of the Visual Studio extension "X++ AI Copilot Companion" (source: `C:\Users\Mohamed Nazmi\OneDrive - Long View Systems Corporation\Documents\DevExt\vsix-companion`, a separate repo and conversation). Goal: a public extension anyone can install from the Marketplace.
 
@@ -27,13 +32,14 @@ Target environments: unified developer environments (UDE, Power Platform hosted)
 - No Visual Studio dependencies (EnvDTE, Microsoft.VisualStudio.*, Microsoft.Dynamics.Framework.Tools.*) in `server/`. Only DLLs from the packages `bin` folder.
 - Metadata changes go through the metadata API, never by writing AOT XML by hand. (`.rnrproj` and label `.txt` files are not AOT metadata and are edited directly.)
 - Keep tool output bounded (the agent's context is the budget) and queries narrow.
-- Git identity for this repo is repo-local: "Mohamed Nazmi" <nazmyeg@gmail.com>, GitHub user `nazmolla`, remote `https://github.com/nazmolla/xpp-vscode.git`. Never change global git config. Never handle credentials; the user signs in via the browser prompt.
+- Remote `origin` is `https://github.com/ngocthien1605/aot-vscode.git`; commit with the git identity already configured on the machine. Never change global git config. Never handle credentials; the user signs in via the browser prompt.
 
 ## Build and test
 - `npm install`, then `npm run build` (= `build:server` + `compile`).
+- `npm test` compiles and runs the unit tests in `test/unit` (plain Node, no VS Code or D365FO needed); CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
 - `scripts/build-server.ps1` finds `PackagesLocalDirectory\bin` from the active configuration and passes it as `D365BinPath`.
 - `scripts/smoke-test.ps1` starts the server over stdio with `TestProj.rnrproj` and runs 16 read-only tool calls with a timeout; all must PASS. Run it after every server change.
-- Test environment on this machine: config `org2f1d2adc___10.0.2790.83.json`, custom model `testcust` in `C:\CustomXppMetadata2vxeu0wu.5pd`, test project `C:\Users\Mohamed Nazmi\source\repos\TestProj\TestProj.rnrproj`, XRef DB `(LocalDB)\MSSQLLocalDB` / `XRef_org2f1d2adc100279083`.
+- Upstream author's test environment (not this machine): config `org2f1d2adc___10.0.2790.83.json`, custom model `testcust` in `C:\CustomXppMetadata2vxeu0wu.5pd`, test project `C:\Users\Mohamed Nazmi\source\repos\TestProj\TestProj.rnrproj`, XRef DB `(LocalDB)\MSSQLLocalDB` / `XRef_org2f1d2adc100279083`.
 - Testing tips: always run the server with a timeout (Process + `WaitForExit(ms)`); never leave a stdio session waiting. PowerShell reports `git push` progress as an error even when it succeeds.
 
 ## Research already done (don't redo)

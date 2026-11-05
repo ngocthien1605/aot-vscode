@@ -58,13 +58,13 @@ export class XppServerClient implements vscode.Disposable {
         this.stop();
     }
 
-    private stop(): void {
+    private stop(reason = 'X++ server stopped.'): void {
         this.process?.kill();
         this.process = undefined;
         this.starting = undefined;
         for (const [, p] of this.pending) {
             clearTimeout(p.timer);
-            p.reject(new Error('X++ server stopped.'));
+            p.reject(new Error(reason));
         }
         this.pending.clear();
     }
@@ -94,11 +94,28 @@ export class XppServerClient implements vscode.Disposable {
         child.on('exit', code => {
             this.log.appendLine(`X++ server exited (${code}).`);
             if (this.process === child) {
-                this.stop();
+                this.stop(`X++ server exited (${code}). See the X++ output for details.`);
             }
         });
+        // Without these, a server that cannot start (missing or blocked exe) is an uncaught error and every
+        // call waits for the request timeout; a write after the server died would be one too (EPIPE).
+        child.on('error', err => {
+            this.log.appendLine(`X++ server could not start: ${err.message}`);
+            if (this.process === child) {
+                this.stop(`X++ server could not start (${exe}): ${err.message}`);
+            }
+        });
+        child.stdin.on('error', err => this.log.appendLine(`X++ server input closed: ${err.message}`));
 
-        await this.request('initialize', { protocolVersion: '2025-06-18', clientInfo: { name: 'xpp-vscode', version: '0' } });
+        try {
+            await this.request('initialize', { protocolVersion: '2025-06-18', clientInfo: { name: 'xpp-vscode', version: '0' } });
+        } catch (err) {
+            // Not initialized: drop this process so the next call starts a fresh one instead of reusing it.
+            if (this.process === child) {
+                this.stop();
+            }
+            throw err;
+        }
     }
 
     private request(method: string, params: object): Promise<any> {

@@ -3,6 +3,7 @@ import { existsSync } from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { orgName, readActiveEnvironment, selectedEnvironmentUrl, XppEnvironment } from './environment';
+import { pacProfileName, safeEnvironmentOrigin, validateModelList } from './hostName';
 import { readProject } from './project';
 
 /**
@@ -17,7 +18,7 @@ export class PacCommands {
         }
         const root = this.workspaceRoot();
         const project = await readProject();
-        const model = await vscode.window.showInputBox({ title: 'Model(s) for the deployment solution', value: project?.model ?? '', prompt: 'Comma-separated model names' });
+        const model = await vscode.window.showInputBox({ title: 'Model(s) for the deployment solution', value: project?.model ?? '', prompt: 'Comma-separated model names', validateInput: validateModelList });
         if (!root || !model) {
             return;
         }
@@ -29,19 +30,21 @@ export class PacCommands {
         if (await this.local()) {
             return;
         }
-        const url = selectedEnvironmentUrl()
-            || await vscode.window.showInputBox({ title: 'Dataverse environment URL', placeHolder: 'https://yourorg.crm.dynamics.com' });
-        if (!url) {
+        const input = selectedEnvironmentUrl()
+            || await vscode.window.showInputBox({ title: 'Dataverse environment URL', placeHolder: 'https://yourorg.crm.dynamics.com', validateInput: validateOrigin });
+        if (!input) {
             return;
         }
+        // pac runs through a shell: only https://<host> with a plain host name goes onto its command line.
+        const url = safeEnvironmentOrigin(input);
         if (await this.selectProfile(url)) {
-            const choice = await vscode.window.showInformationMessage(`pac uses its profile ${profileName(url)} for ${orgName(url)}.`, 'Sign In Again');
+            const choice = await vscode.window.showInformationMessage(`pac uses its profile ${pacProfileName(url)} for ${orgName(url)}.`, 'Sign In Again');
             if (choice !== 'Sign In Again') {
                 return;
             }
-            await this.run('Remove profile', ['auth', 'delete', '--name', profileName(url)]);
+            await this.run('Remove profile', ['auth', 'delete', '--name', pacProfileName(url)]);
         }
-        await this.run('Sign in', ['auth', 'create', '--name', profileName(url), '--environment', url]);
+        await this.run('Sign in', ['auth', 'create', '--name', pacProfileName(url), '--environment', url]);
     }
 
     async deploy(): Promise<void> {
@@ -79,7 +82,7 @@ export class PacCommands {
         const args = ['package', 'db-sync', '--db-sync', mode, ...this.environmentArgs()];
         if (mode === 'Module') {
             const project = await readProject();
-            const modules = await vscode.window.showInputBox({ title: 'Modules to synchronize', value: project?.model ?? '' });
+            const modules = await vscode.window.showInputBox({ title: 'Modules to synchronize', value: project?.model ?? '', validateInput: validateModelList });
             if (!modules) {
                 return;
             }
@@ -115,7 +118,7 @@ export class PacCommands {
 
     private environmentArgs(): string[] {
         const url = selectedEnvironmentUrl();
-        return url ? ['--environment', url] : [];
+        return url ? ['--environment', safeEnvironmentOrigin(url)] : [];
     }
 
     /** Selects the environment's profile; without one, asks before running on pac's active profile, which may be another tenant's. */
@@ -134,9 +137,10 @@ export class PacCommands {
     }
 
     /** Makes the environment's profile from Sign In active. */
-    private selectProfile(url: string): Promise<boolean> {
-        // The name comes from a host name ([a-z0-9-]), so the command line needs no further quoting.
-        return new Promise(resolve => exec(`"${this.pac()}" auth select --name ${profileName(url)}`,
+    private async selectProfile(url: string): Promise<boolean> {
+        // pac is a .cmd, so this goes through cmd.exe; pacProfileName only returns [a-z0-9-], which needs no quoting.
+        const name = pacProfileName(url);
+        return new Promise(resolve => exec(`"${this.pac()}" auth select --name ${name}`,
             { windowsHide: true, timeout: 60_000 }, err => resolve(!err)));
     }
 
@@ -187,7 +191,11 @@ export class PacCommands {
     }
 }
 
-/** pac profile names are at most 30 characters. */
-function profileName(url: string): string {
-    return orgName(url).slice(0, 30);
+function validateOrigin(input: string): string | undefined {
+    try {
+        safeEnvironmentOrigin(input);
+        return undefined;
+    } catch (err) {
+        return (err as Error).message;
+    }
 }

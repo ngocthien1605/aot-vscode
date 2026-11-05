@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { promises as dns } from 'dns';
 import * as vscode from 'vscode';
 import { orgName, selectedEnvironmentUrl, useEnvironment } from './environment';
+import { isSafeHostName } from './hostName';
 
 const DevToolsService = 'https://developertools.powerplatform.microsoft.com';
 
@@ -140,6 +141,9 @@ export function validateDataverseUrl(input: string): string | undefined {
         host = new URL(normalizeDataverseUrl(input)).hostname.toLowerCase();
     } catch {
         return 'Enter a URL such as https://yourorg.crm.dynamics.com';
+    }
+    if (!isSafeHostName(host)) {
+        return 'The host name may contain only letters, digits, hyphens and dots.';
     }
     if (/(^|\.)(powerplatform\.microsoft\.com|powerapps\.com)$/.test(host)) {
         return 'That is a portal page. Copy the environment\'s "Environment URL" (https://yourorg.crm.dynamics.com) from the Power Platform admin center.';
