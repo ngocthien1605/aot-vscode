@@ -4,6 +4,7 @@
 - `ngocthien1605/aot-vscode` is a fork of `nazmolla/xpp-vscode` (Apache-2.0; keep `LICENSE` and `NOTICE`, and list changes under "Modifications" in `NOTICE`). The git remote `upstream` points to the original.
 - The rest of this file is the upstream author's notes. Paths under `C:\Users\Mohamed Nazmi\...`, the `org2f1d2adc` environment and the `testcust` model are on their machine, not this one: ask for the local equivalents instead of assuming them.
 - Pull upstream fixes with `git fetch upstream` and `git merge upstream/main`; keep diffs to ported code small so that stays easy.
+- `.github/workflows/sync-upstream.yml` (logic in `.github/scripts/sync-upstream.sh`) does this every Monday: it merges new upstream commits into `sync/upstream` and opens a pull request into `main`, or an issue on a merge conflict. Merge sync pull requests with a merge commit, never squash or rebase, or the next run offers the same commits again.
 
 ## What this project is
 A VS Code extension, **F&O Studio for VS Code**, that brings Dynamics 365 Finance & Operations (D365FO) X++ development to VS Code and its AI agents, without Visual Studio. It is the VS Code successor of the Visual Studio extension "X++ AI Copilot Companion" (source: `C:\Users\Mohamed Nazmi\OneDrive - Long View Systems Corporation\Documents\DevExt\vsix-companion`, a separate repo and conversation). Goal: a public extension anyone can install from the Marketplace.

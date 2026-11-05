@@ -1,0 +1,42 @@
+name: Sync upstream
+
+# Every Monday, merges new commits of the original repository (nazmolla/xpp-vscode) into the branch
+# sync/upstream and opens a pull request into main; on a merge conflict, opens an issue instead.
+# A person reviews and merges: merge with "Create a merge commit", never squash or rebase.
+# Needs Settings > Actions > General > Workflow permissions > "Allow GitHub Actions to create and approve
+# pull requests". The logic is in .github/scripts/sync-upstream.sh.
+
+on:
+  schedule:
+    - cron: '23 0 * * 1'   # Mondays 00:23 UTC = 09:23 in Tokyo
+  workflow_dispatch:       # "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write          # push sync/upstream
+  pull-requests: write     # open and comment on the sync pull request
+  issues: write            # report merge conflicts
+  actions: write           # start CI on sync/upstream
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # Not in copies of this repository that never asked for it.
+    if: github.repository == 'ngocthien1605/aot-vscode'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0   # the whole history, so git can find what upstream and main have in common
+      - name: Merge upstream and open a pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_URL: https://github.com/nazmolla/xpp-vscode.git
+          UPSTREAM_BRANCH: main
+          BASE_BRANCH: main
+          SYNC_BRANCH: sync/upstream
+        run: bash .github/scripts/sync-upstream.sh
