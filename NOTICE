@@ -9,3 +9,9 @@ this project is independent and is not affiliated with or endorsed by Microsoft.
 
 Third-party components:
 - media/codicons: Codicons by Microsoft Corporation (https://github.com/microsoft/vscode-codicons), MIT License for the code and CC BY 4.0 for the icons.
+
+Modifications
+This copy (https://github.com/ngocthien1605/aot-vscode) is a modified version of
+https://github.com/nazmolla/xpp-vscode (version 0.10.1, commit e50e43a). Changes are recorded in the git history;
+in summary: hardened the pac command line and environment-URL handling, restricted executable-path settings to user
+settings, made the server client fail fast when the server cannot start, added unit tests and CI.
